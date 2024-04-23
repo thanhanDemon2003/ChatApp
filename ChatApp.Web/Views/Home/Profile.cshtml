@@ -1,0 +1,101 @@
+﻿@model ProfileVM
+
+
+<div class="container">
+    <form class="main-body" method="post">
+        <input asp-for="UserProfile.ImageUrl" hidden />
+        <input asp-for="UserProfile.Email" hidden />
+        <div class="row gutters-sm">
+            <div class="col-md-4 mb-3">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex flex-column align-items-center text-center">
+                            <img src="@Model.UserProfile.ImageUrl"
+                                 alt="Admin"
+                                 class="rounded-circle"
+                                 width="150" />
+
+                            <div class="mt-3">
+                                <h4>@Model.UserProfile.Name</h4>
+                                <p class="text-secondary mb-1">@Model.UserProfile.Email</p>
+                                <p class="text-muted font-size-sm">
+                                    @Model.UserProfile.Address
+                                </p>
+                                @* <button class="btn btn-primary">Follow</button>
+                                <button class="btn btn-outline-primary">Message</button> *@
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-8" >
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-sm-3">
+                                <h6 class="mb-0"> Tên</h6>
+                            </div>
+                            <input class="col-sm-9" asp-for="UserProfile.Name"></input>
+                        </div>
+                        <hr />
+                        <div class="row">
+                            <div class="col-sm-3">
+                                <h6 class="mb-0">Số điện thoại</h6>
+                            </div>
+                            <input asp-for="UserProfile.PhoneNumber" class="col-sm-9"></input>
+                        </div>
+                        <hr />
+                        <div class="row">
+                            <div class="col-sm-3">
+                                <h6 class="mb-0">Ngày sinh</h6>
+                            </div>
+                            <input asp-for="UserProfile.DateOfBirthday" type="date" class="col-sm-9 "></input>
+                        </div>
+                        <hr />
+                        <div class="row">
+                            <div class="col-sm-3">
+                                <h6 class="mb-0">Địa chỉ</h6>
+                            </div>
+                            <input asp-for="UserProfile.Address" class="col-sm-9">
+                            </input>
+                        </div>
+                        <hr />
+                        <div class="row">
+                            <div class="col-sm-3">
+                                <h6 class="mb-0">Ảnh</h6>
+                            </div>
+                            <input  asp-for="@Model.Image" accept="image/*" class="col-sm-9">
+                        <div class="row">
+                            <div class="col-sm-2">
+                                    <button class="btn btn-success"
+                                type="submit"  
+                                >Sửa</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts
+{@* 
+    <script>
+        $(document).ready(function () {
+            $("button").click(function () {
+                if ($("input").attr("disabled")) {
+                    $("input").removeAttr("disabled");
+                    $("button[type='submit']").removeAttr("hidden");
+                }
+                else {
+                    $("input").attr("disabled", "disabled");
+                    $("button[type='submit']").attr("hidden", "hidden");
+                }
+            });
+
+        });
+
+    </script> *@
+}
+

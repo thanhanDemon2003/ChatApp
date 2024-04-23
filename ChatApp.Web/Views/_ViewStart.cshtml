@@ -1,0 +1,13 @@
+﻿
+
+@* @{
+    Layout = "_Layout";
+} *@
+@if (User.Identity.IsAuthenticated)
+{
+    Layout = "_Layout";
+}
+else
+{
+    Layout = "_LayoutLogin";
+}
