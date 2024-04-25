@@ -16,7 +16,9 @@ namespace Chat.Domain.Entities
         public string ImageUrl { get; set; }
         public DateOnly CreateAt { get; set; }
         public string? Address { get; set; }
-        public List<UserConversation> UserConversations { get; set; }
+        public ICollection<UserGroup> UserGroups { get; set; }
+        public ICollection<Message> SentMessages { get; set; }
+        public ICollection<Attachment> SentFiles { get; set; }
 
     }
 }

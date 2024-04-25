@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "0STdKjAnjjsCFez9oz6g83WCNMGVD0n0qFElifZMECNt8a+hXUP+X7twFYOYvwgFPNjqwVP/GZg5Kkpjprk8XA==",
+  "dgSpecHash": "JpMhDV8rKH2zHG+GLcrXcon5a/XyRESynHwEg+HdP/sJ3xvCMTBoAYUKafDAl51A2xaCCXCgSJbKlFkYUfcgOw==",
   "success": true,
-  "projectFilePath": "C:\\Users\\ThanhAn\\source\\repos\\ChatApp.Web\\Chat.Infrastructure\\Chat.Infrastructure.csproj",
+  "projectFilePath": "B:\\CodeRun\\.NetCore\\ChatApp\\Chat.Infrastructure\\Chat.Infrastructure.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\ThanhAn\\.nuget\\packages\\azure.core\\1.35.0\\azure.core.1.35.0.nupkg.sha512",
     "C:\\Users\\ThanhAn\\.nuget\\packages\\azure.identity\\1.10.3\\azure.identity.1.10.3.nupkg.sha512",

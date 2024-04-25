@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "pkvjSDpThpsiD07xvYzFMclj2siIfTTAK9e8b24D/9DtQCaoqyTk/cqjq10nHAEGGlkXwCS/TVLL8wbMmpC6EQ==",
+  "dgSpecHash": "MnCaKfjBbIcD16VBboapQrGhzNFHtiEvlVW+zrE48AKpcN/+KxndO9c7LRWBBn78RZc7FNosyPjJU/iJdcEhHg==",
   "success": true,
-  "projectFilePath": "C:\\Users\\ThanhAn\\source\\repos\\ChatApp.Web\\ChatApp.Web\\ChatApp.Web.csproj",
+  "projectFilePath": "B:\\CodeRun\\.NetCore\\ChatApp\\ChatApp.Web\\ChatApp.Web.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\ThanhAn\\.nuget\\packages\\automapper\\13.0.1\\automapper.13.0.1.nupkg.sha512",
     "C:\\Users\\ThanhAn\\.nuget\\packages\\azure.core\\1.35.0\\azure.core.1.35.0.nupkg.sha512",

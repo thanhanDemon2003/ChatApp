@@ -9262,11 +9262,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\ThanhAn\\source\\repos\\ChatApp.Web\\ChatApp.Web\\ChatApp.Web.csproj",
+      "projectUniqueName": "B:\\CodeRun\\.NetCore\\ChatApp\\ChatApp.Web\\ChatApp.Web.csproj",
       "projectName": "ChatApp.Web",
-      "projectPath": "C:\\Users\\ThanhAn\\source\\repos\\ChatApp.Web\\ChatApp.Web\\ChatApp.Web.csproj",
+      "projectPath": "B:\\CodeRun\\.NetCore\\ChatApp\\ChatApp.Web\\ChatApp.Web.csproj",
       "packagesPath": "C:\\Users\\ThanhAn\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\ThanhAn\\source\\repos\\ChatApp.Web\\ChatApp.Web\\obj\\",
+      "outputPath": "B:\\CodeRun\\.NetCore\\ChatApp\\ChatApp.Web\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -9288,11 +9288,11 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "projectReferences": {
-            "C:\\Users\\ThanhAn\\source\\repos\\ChatApp.Web\\Chat.Application\\Chat.Application.csproj": {
-              "projectPath": "C:\\Users\\ThanhAn\\source\\repos\\ChatApp.Web\\Chat.Application\\Chat.Application.csproj"
+            "B:\\CodeRun\\.NetCore\\ChatApp\\Chat.Application\\Chat.Application.csproj": {
+              "projectPath": "B:\\CodeRun\\.NetCore\\ChatApp\\Chat.Application\\Chat.Application.csproj"
             },
-            "C:\\Users\\ThanhAn\\source\\repos\\ChatApp.Web\\Chat.Infrastructure\\Chat.Infrastructure.csproj": {
-              "projectPath": "C:\\Users\\ThanhAn\\source\\repos\\ChatApp.Web\\Chat.Infrastructure\\Chat.Infrastructure.csproj"
+            "B:\\CodeRun\\.NetCore\\ChatApp\\Chat.Infrastructure\\Chat.Infrastructure.csproj": {
+              "projectPath": "B:\\CodeRun\\.NetCore\\ChatApp\\Chat.Infrastructure\\Chat.Infrastructure.csproj"
             }
           }
         }

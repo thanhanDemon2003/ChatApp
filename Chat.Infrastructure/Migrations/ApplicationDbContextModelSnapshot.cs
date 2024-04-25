@@ -112,10 +112,7 @@ namespace Chat.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AttachmentId"));
 
-                    b.Property<int?>("ConversationId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("FileType")
+                    b.Property<string>("FileName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -123,19 +120,32 @@ namespace Chat.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("MessageId")
+                    b.Property<int?>("GroupId")
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("UploadedAt")
+                    b.Property<string>("ReceiverId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("SentDate")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<bool>("isDeleted")
+                        .HasColumnType("bit");
 
                     b.HasKey("AttachmentId");
 
-                    b.HasIndex("ConversationId");
+                    b.HasIndex("GroupId");
 
-                    b.HasIndex("MessageId");
+                    b.HasIndex("ReceiverId");
 
-                    b.ToTable("Attachments", (string)null);
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Files");
                 });
 
             modelBuilder.Entity("Chat.Domain.Entities.Conversation", b =>
@@ -146,22 +156,49 @@ namespace Chat.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ConversationId"));
 
-                    b.Property<int>("ConversationType")
+                    b.Property<int?>("GroupId")
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<DateTime>("LatestMessageDateTime")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("Name")
+                    b.Property<string>("ReceiverId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserRefId")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
                     b.HasKey("ConversationId");
 
-                    b.ToTable("Conversations", (string)null);
+                    b.ToTable("Conversations");
+                });
+
+            modelBuilder.Entity("Chat.Domain.Entities.Group", b =>
+                {
+                    b.Property<int>("GroupId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("GroupId"));
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("GroupName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("isDeleted")
+                        .HasColumnType("bit");
+
+                    b.HasKey("GroupId");
+
+                    b.ToTable("Groups");
                 });
 
             modelBuilder.Entity("Chat.Domain.Entities.Message", b =>
@@ -176,51 +213,46 @@ namespace Chat.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("ConversationId")
+                    b.Property<int?>("GroupId")
                         .HasColumnType("int");
 
-                    b.Property<string>("SenderId")
+                    b.Property<string>("ReceiverId")
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<DateTime>("SentAt")
+                    b.Property<DateTime>("SentDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("UserRefId")
+                    b.Property<string>("UserId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<bool>("isDeleted")
+                        .HasColumnType("bit");
 
                     b.HasKey("MessageId");
 
-                    b.HasIndex("ConversationId");
+                    b.HasIndex("GroupId");
 
-                    b.HasIndex("SenderId");
-
-                    b.ToTable("Messages", (string)null);
-                });
-
-            modelBuilder.Entity("Chat.Domain.Entities.UserConversation", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("ConversationId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("UserRefId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ConversationId");
+                    b.HasIndex("ReceiverId");
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("UserConversations", (string)null);
+                    b.ToTable("Messages");
+                });
+
+            modelBuilder.Entity("Chat.Domain.Entities.UserGroup", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("GroupId")
+                        .HasColumnType("int");
+
+                    b.HasKey("UserId", "GroupId");
+
+                    b.HasIndex("GroupId");
+
+                    b.ToTable("UserGroups");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -358,49 +390,68 @@ namespace Chat.Infrastructure.Migrations
 
             modelBuilder.Entity("Chat.Domain.Entities.Attachment", b =>
                 {
-                    b.HasOne("Chat.Domain.Entities.Conversation", null)
-                        .WithMany("Attachments")
-                        .HasForeignKey("ConversationId");
+                    b.HasOne("Chat.Domain.Entities.Group", "Group")
+                        .WithMany("Files")
+                        .HasForeignKey("GroupId");
 
-                    b.HasOne("Chat.Domain.Entities.Message", "Message")
-                        .WithMany("Attachments")
-                        .HasForeignKey("MessageId")
+                    b.HasOne("Chat.Domain.Entities.ApplicationUser", "Receiver")
+                        .WithMany()
+                        .HasForeignKey("ReceiverId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Chat.Domain.Entities.ApplicationUser", "User")
+                        .WithMany("SentFiles")
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Message");
+                    b.Navigation("Group");
+
+                    b.Navigation("Receiver");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Chat.Domain.Entities.Message", b =>
                 {
-                    b.HasOne("Chat.Domain.Entities.Conversation", "Conversation")
+                    b.HasOne("Chat.Domain.Entities.Group", "Group")
                         .WithMany("Messages")
-                        .HasForeignKey("ConversationId")
+                        .HasForeignKey("GroupId");
+
+                    b.HasOne("Chat.Domain.Entities.ApplicationUser", "Receiver")
+                        .WithMany()
+                        .HasForeignKey("ReceiverId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Chat.Domain.Entities.ApplicationUser", "User")
+                        .WithMany("SentMessages")
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Chat.Domain.Entities.ApplicationUser", "Sender")
-                        .WithMany()
-                        .HasForeignKey("SenderId");
+                    b.Navigation("Group");
 
-                    b.Navigation("Conversation");
+                    b.Navigation("Receiver");
 
-                    b.Navigation("Sender");
+                    b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Chat.Domain.Entities.UserConversation", b =>
+            modelBuilder.Entity("Chat.Domain.Entities.UserGroup", b =>
                 {
-                    b.HasOne("Chat.Domain.Entities.Conversation", "Conversation")
-                        .WithMany("UserConversations")
-                        .HasForeignKey("ConversationId")
+                    b.HasOne("Chat.Domain.Entities.Group", "Group")
+                        .WithMany("UserGroups")
+                        .HasForeignKey("GroupId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Chat.Domain.Entities.ApplicationUser", "User")
-                        .WithMany("UserConversations")
-                        .HasForeignKey("UserId");
+                        .WithMany("UserGroups")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
-                    b.Navigation("Conversation");
+                    b.Navigation("Group");
 
                     b.Navigation("User");
                 });
@@ -458,21 +509,20 @@ namespace Chat.Infrastructure.Migrations
 
             modelBuilder.Entity("Chat.Domain.Entities.ApplicationUser", b =>
                 {
-                    b.Navigation("UserConversations");
+                    b.Navigation("SentFiles");
+
+                    b.Navigation("SentMessages");
+
+                    b.Navigation("UserGroups");
                 });
 
-            modelBuilder.Entity("Chat.Domain.Entities.Conversation", b =>
+            modelBuilder.Entity("Chat.Domain.Entities.Group", b =>
                 {
-                    b.Navigation("Attachments");
+                    b.Navigation("Files");
 
                     b.Navigation("Messages");
 
-                    b.Navigation("UserConversations");
-                });
-
-            modelBuilder.Entity("Chat.Domain.Entities.Message", b =>
-                {
-                    b.Navigation("Attachments");
+                    b.Navigation("UserGroups");
                 });
 #pragma warning restore 612, 618
         }

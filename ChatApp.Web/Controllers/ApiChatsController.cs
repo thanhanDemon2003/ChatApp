@@ -24,581 +24,769 @@ namespace ChatApp.Web.Controllers
     [ApiController]
     public class ApiChatsController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly ApplicationDbContext _db;
         private readonly IHubContext<ChatHub> _hubContext;
         private readonly IHomeService _homeService;
         private readonly IMapper _mapper;
         protected APIResponse _response;
-        public ApiChatsController(ApplicationDbContext context,
-           IHubContext<ChatHub> hubContext
-            , IHomeService homeService,
-           IMapper mapper
-            )
+
+
+        public ApiChatsController(ApplicationDbContext db, IHubContext<ChatHub> hubContext, IHomeService homeService, IMapper mapper)
         {
-            _context = context;
+            _db = db;
             _hubContext = hubContext;
             _homeService = homeService;
             _mapper = mapper;
+            _response = new APIResponse();
         }
-
-        //GET: api/ChatRooms
-        [HttpGet]
-        [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [Route("/[controller]/GetChatRoom")]
-        public async Task<ActionResult<APIResponse>> GetChatRoom()
-        {
-            try
-            {
-                IEnumerable<Conversation> conversations;
-                conversations = await _context.Conversations.ToListAsync();
-                return new APIResponse
-                {
-                    StatusCode = System.Net.HttpStatusCode.OK,
-                    IsSuccess = true,
-                    Result = conversations
-                };
-            }
-            catch (Exception ex)
-            {
-                return new APIResponse
-                {
-                    StatusCode = System.Net.HttpStatusCode.InternalServerError,
-                    IsSuccess = false,
-                    ErrorMessages = new List<string> { ex.Message }
-                };
-            }
-        }
-
-        [HttpGet]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [Route("/[controller]/GetChatUser/{userId}")]
-        public async Task<ActionResult<APIResponse>> GetChatUser(string userId)
-        {
-            try
-            {
-                //var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                if (userId == null)
-                {
-                    return new APIResponse
-                    {
-                        StatusCode = HttpStatusCode.BadRequest,
-                        IsSuccess = false,
-                        ErrorMessages = new List<string> { "userId không tồn tại!" }
-                    };
-                }
-                var users = await _context.Users.ToListAsync();
-                var res = users.Where(u => u.Id != userId).Select(u => new { u.Id, u.UserName }).ToList();
-                return new APIResponse
-                {
-                    StatusCode = HttpStatusCode.OK,
-                    IsSuccess = true,
-                    Result = res
-                };
-            }
-            catch (Exception ex)
-            {
-                return new APIResponse
-                {
-                    StatusCode = HttpStatusCode.InternalServerError,
-                    IsSuccess = false,
-                    ErrorMessages = new List<string> { ex.Message }
-                };
-            }
-        }
-
-        [HttpGet]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [Route("/[controller]/GetChatRoomUser/{userId}")]
-        public async Task<ActionResult<APIResponse>> GetChatRoomFromUser(string userId)
-        {
-            try
-            {
-                IEnumerable<UserConversation> userConversations;
-                userConversations = await _context.UserConversations
-                      .Where(uc => uc.UserRefId == userId)
-                      .Join(_context.Conversations,
-                            uc => uc.ConversationId,
-                            c => c.ConversationId,
-                            (uc, c) => new { UserConversation = uc, Conversation = c })
-                      .OrderByDescending(x => x.Conversation.UpdatedAt)
-                      .Select(x => x.UserConversation)
-                      .ToListAsync();
-                var conversations = new List<Conversation>();
-
-                foreach (var uc in userConversations)
-                {
-                    var conversation = await _context.Conversations.FindAsync(uc.ConversationId);
-                    conversations.Add(conversation);
-                }
-                return new APIResponse
-                {
-                    StatusCode = HttpStatusCode.OK,
-                    IsSuccess = true,
-                    Result = conversations
-                };
-            }
-            catch (Exception ex)
-            {
-                return new APIResponse
-                {
-                    StatusCode = HttpStatusCode.InternalServerError,
-                    IsSuccess = false,
-                    ErrorMessages = new List<string> { ex.Message }
-                };
-            }
-        }
-        //("{roomName}")
         [HttpPost]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [Route("/[controller]/CreateRoomChat")]
-        public async Task<ActionResult<APIResponse>> CreateRoomChat([FromBody] RoomChatDTO roomChat)
+        [Route("[controller]/LoginMobile")]
+        public async Task<ActionResult<APIResponse>> LoginMobile(LoginVM model)
         {
             try
             {
-                if (roomChat == null)
+                var user = await _db.Users.FirstOrDefaultAsync(x => x.Email == model.Email);
+                if (user == null)
                 {
-                    return new APIResponse
-                    {
-                        StatusCode = HttpStatusCode.BadRequest,
-                        IsSuccess = false,
-                        ErrorMessages = new List<string> { "Dữ liệu không hợp lệ" }
-                    };
+                    _response.Notification = new List<string> { "User không tồn tại" };
+                    _response.IsSuccess = false;
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    return _response;
                 }
-                var userId = roomChat.userCrate;
-                var conversation = new Conversation
+                var result = await _homeService.Login(model.Email, model.Password, false);
+                if (result.Succeeded)
                 {
-                    Name = roomChat.RoomName,
-                    ConversationType = ConversationType.Group,
-                    CreatedAt = DateTime.Now,
-                    UserConversations = new List<UserConversation>
-                {
-                    new UserConversation
-                    {
-                        UserRefId = userId
-                    }
-                }
-                };
-
-                foreach (var id in roomChat.userIds)
-                {
-                    conversation.UserConversations.Add(new UserConversation
-                    {
-                        UserRefId = id
-                    });
-                }
-
-                _context.Conversations.Add(conversation);
-                await _context.SaveChangesAsync();
-
-                return new APIResponse
-                {
-                    StatusCode = HttpStatusCode.OK,
-                    IsSuccess = true,
-                    Result = conversation
-                };
-            }
-            catch
-            {
-                return new APIResponse
-                {
-                    StatusCode = HttpStatusCode.InternalServerError,
-                    IsSuccess = false,
-                    ErrorMessages = new List<string> { "Lỗi khi tạo phòng chat" }
-                };
-            }
-        }
-        // ("{id}")
-        [HttpDelete]
-        [Route("/[controller]/DeleteRoomChat/{id}")]
-        public async Task<ActionResult<APIResponse>> DeleteRoomChat(int id)
-        {
-            try
-            {
-                var chatRoom = await _context.Conversations.FindAsync(id);
-                if (chatRoom == null)
-                {
-                    return NotFound();
-                }
-
-                _context.Conversations.Remove(chatRoom);
-                await _context.SaveChangesAsync();
-
-                var room = await _context.Conversations.FirstOrDefaultAsync();
-
-                return new APIResponse
-                {
-                    StatusCode = HttpStatusCode.OK,
-                    IsSuccess = true,
-                    Result = new { deleted = id, selected = (room == null ? 0 : room.ConversationId) }
-                };
-            }
-            catch (Exception ex)
-            {
-                _response.StatusCode = HttpStatusCode.InternalServerError;
-                _response.IsSuccess = false;
-                _response.ErrorMessages = new List<string> { ex.Message };
-                return CreatedAtRoute("DeleteRoomChat", new { id = id }, _response);
-            }
-        }
-        //POST: api/ChatRooms
-        //To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        //[HttpPost]
-        //[Route("/[controller]/PostChatRoom")]
-        //public async Task<ActionResult<Conversation>> PostChatRoom(Conversation chatRoom)
-        //{
-        //    if (_context.Conversations == null)
-        //    {
-        //        return Problem("Entity set 'ApplicationDbContext.ChatRoom'  is null.");
-        //    }
-        //    _context.Conversations.Add(chatRoom);
-        //    await _context.SaveChangesAsync();
-
-        //    return CreatedAtAction("GetChatRoom", new { id = chatRoom.ConversationId }, chatRoom);
-        //}
-        [HttpPost]
-        [Route("/[controller]/PostMessageConversationGroup")]
-        public async Task<ActionResult<APIResponse>> PostMessageGroup(MessagesDTO mess)
-        {
-            try
-            {
-                var cv = await _context.Conversations.FindAsync(mess.ConversationId);
-                if (cv == null)
-                {
-                    return new APIResponse
-                    {
-                        StatusCode = HttpStatusCode.NotFound,
-                        IsSuccess = false,
-                        ErrorMessages = new List<string> { "Không tìm thấy cuộc trò chuyện" }
-                    };
+                    var userData = await _db.Users.FirstOrDefaultAsync(x => x.Email == model.Email);
+                    _response.Result = userData;
+                    _response.Notification = new List<string> { "Đăng nhập thành công" };
+                    _response.StatusCode = HttpStatusCode.OK;
+                    _response.IsSuccess = true;
+                    return _response;
                 }
                 else
                 {
-                    if (mess.AttachmentUrl != null)
-                    {
-                        Attachment attachment = new()
-                        {
-                            conversationId = mess.ConversationId,
-                            senderId = mess.senderId,
-                            FileUrl = mess.AttachmentUrl,
-                            FileType = mess.AttachmentType,
-                            UploadedAt = DateTime.Now
-
-                        };
-                        cv.Attachments.Add(attachment);
-                    }
-                    else
-                    {
-                        Message message = new()
-                        {
-                            ConversationId = mess.ConversationId,
-                            UserRefId = mess.senderId,
-                            Content = mess.Content,
-                            SentAt = DateTime.Now
-                        };
-                        cv.Messages.Add(message);
-                    }
-                    cv.UpdatedAt = DateTime.Now;
-                    _context.Conversations.Update(cv);
-                    await _context.SaveChangesAsync();
-                    _ = _hubContext.Clients.Group(cv.ConversationId.ToString()).SendAsync("ReceiveMessage", mess);
-                    return new APIResponse { StatusCode = HttpStatusCode.OK, IsSuccess = true, Result = mess };
+                    _response.Notification = new List<string> { "Đăng nhập thất bại" };
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    return _response;
                 }
             }
             catch (Exception ex)
             {
-                return new APIResponse
-                {
-                    StatusCode = HttpStatusCode.InternalServerError,
-                    IsSuccess = false,
-                    ErrorMessages = new List<string> { ex.Message }
-                };
+                _response.Notification = new List<string> { ex.Message };
+                _response.IsSuccess = false;
+                _response.StatusCode = HttpStatusCode.InternalServerError;
+                return _response;
             }
-
         }
-        //("{receiverId}")
         [HttpPost]
-        [Route("/[controller]/PostPrivateChat")]
-        public async Task<ActionResult<APIResponse>> PostPrivateChat(MessagesDTO mess)
+        [Route("[controller]/RegisterMobile")]
+        public async Task<ActionResult<APIResponse>> RegisterMobile(RegisterVM model)
         {
             try
             {
-                var conversation = await _context.Conversations
-                    .Where(c => c.ConversationType == ConversationType.Private)
-                    .Include(c => c.UserConversations)
-                    .FirstOrDefaultAsync(c => c.UserConversations.Any(uc => uc.UserRefId == mess.senderId));
+                var user = await _db.Users.FirstOrDefaultAsync(x => x.Email == model.Email);
+                if (user != null)
+                {
+                    _response.Notification = new List<string> { "Email đã tồn tại" };
+                    _response.IsSuccess = false;
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    return _response;
+                }
+                var result = await _homeService.Register(model.Email, model.Name, model.Password);
+                if (result.Succeeded)
+                {
+                    var userData = await _db.Users.FirstOrDefaultAsync(x => x.Email == model.Email);
+                    _response.Result = userData;
+                    _response.Notification = new List<string> { "Đăng ký thành công" };
+                    _response.StatusCode = HttpStatusCode.OK;
+                    _response.IsSuccess = true;
+                    return _response;
+                }
+                else
+                {
+                    _response.Notification = new List<string> { "Đăng ký thất bại" };
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    return _response;
+                }
+            }
+            catch (Exception ex)
+            {
+                _response.Notification = new List<string> { ex.Message };
+                _response.IsSuccess = false;
+                _response.StatusCode = HttpStatusCode.InternalServerError;
+                return _response;
+            }
+        }
+        [HttpGet]
+        [Route("[controller]/GetAllGroupChat")]
+        public async Task<ActionResult<APIResponse>> GetAllGroupChat()
+        {
+            try
+            {
+                var groupChats = await _db.Groups.Include(g => g.UserGroups).ThenInclude(ug => ug.User).ToListAsync();
+                var groupChatDtos = new List<GroupDTO>();
+
+                foreach (var groupChat in groupChats)
+                {
+                    var userGroupDtos = new List<UserDTO>();
+                    foreach (var userGroup in groupChat.UserGroups)
+                    {
+                        var userGroupDto = _mapper.Map<UserDTO>(userGroup);
+                        userGroupDtos.Add(userGroupDto);
+                    }
+
+                    var groupChatDto = new GroupDTO
+                    {
+                        GroupName = groupChat.GroupName,
+                        CreatedDate = groupChat.CreatedDate,
+                        CreatedBy = groupChat.CreatedBy,
+                        UserGroups = userGroupDtos
+                    };
+
+                    groupChatDtos.Add(groupChatDto);
+                }
+
+                _response.Result = groupChatDtos;
+                _response.Notification = new List<string> { "Lấy dữ liệu thành công" };
+                _response.StatusCode = HttpStatusCode.OK;
+                _response.IsSuccess = true;
+                return _response;
+            }
+            catch (Exception ex)
+            {
+                _response.Notification = new List<string> { ex.Message };
+                _response.IsSuccess = false;
+                _response.StatusCode = HttpStatusCode.InternalServerError;
+                return _response;
+            }
+        }
+        [HttpGet]
+        [Route("[controller]/GetAllUser")]
+        public async Task<ActionResult<APIResponse>> GetAllUser()
+        {
+            try
+            {
+                var users = await _db.Users.GroupBy(x => x.Id).Select(x => new UserDTO
+                {
+                    Id = x.Key,
+                    Email = x.FirstOrDefault().Email,
+                    FullName = x.FirstOrDefault().Name,
+                    ImageUrl = x.FirstOrDefault().ImageUrl,
+                    PhoneNumber = x.FirstOrDefault().PhoneNumber,
+                    Address = x.FirstOrDefault().Address
+                }).ToListAsync();
+
+                _response.Result = users;
+                _response.Notification = new List<string> { "Lấy dữ liệu thành công" };
+                _response.StatusCode = HttpStatusCode.OK;
+                _response.IsSuccess = true;
+                return _response;
+            }
+            catch (Exception ex)
+            {
+                _response.Notification = new List<string> { ex.Message };
+                _response.IsSuccess = false;
+                _response.StatusCode = HttpStatusCode.InternalServerError;
+                return _response;
+            }
+        }
+        [HttpPost]
+        [Route("[controller]/CreateGroupChat")]
+        public async Task<ActionResult<APIResponse>> CreateGroup([FromBody] RoomChatDTO roomChat)
+        {
+            try
+            {
+                var groupChat = new Group
+                {
+                    GroupName = roomChat.RoomName,
+                    CreatedDate = DateTime.Now,
+                    CreatedBy = roomChat.userCrate,
+                    UserGroups = new List<UserGroup>()
+                };
+                var userCreateGroup = new UserGroup
+                {
+                    UserId = roomChat.userCrate,
+                    GroupId = groupChat.GroupId,
+                };
+                groupChat.UserGroups.Add(userCreateGroup);
+                foreach (var item in roomChat.userIds)
+                {
+                    var userGroup = new UserGroup
+                    {
+                        UserId = item,
+                        GroupId = groupChat.GroupId
+                    };
+                    groupChat.UserGroups.Add(userGroup);
+                }
+
+                await _db.Groups.AddAsync(groupChat);
+                await _db.SaveChangesAsync();
+
+                foreach (var userConversation in groupChat.UserGroups)
+                {
+                    Conversation conversation = new Conversation
+                    {
+                        UserRefId = userConversation.UserId,
+                        GroupId = groupChat.GroupId,
+                        LatestMessageDateTime = DateTime.Now
+                    };
+                    await _db.Conversations.AddAsync(conversation);
+                }
+                await _db.SaveChangesAsync();
+                var userGroupDtos = new List<UserDTO>();
+                foreach (var userGroup in groupChat.UserGroups)
+                {
+                    await _db.Entry(userGroup).Reference(ug => ug.User).LoadAsync();
+                    var userGroupDto = _mapper.Map<UserDTO>(userGroup);
+                    userGroupDtos.Add(userGroupDto);
+                }
+
+                var groupChatDto = new GroupDTO
+                {
+                    GroupName = groupChat.GroupName,
+                    CreatedDate = groupChat.CreatedDate,
+                    CreatedBy = groupChat.CreatedBy,
+                    UserGroups = userGroupDtos
+                };
+
+                _response.Result = groupChatDto;
+                _response.Notification = new List<string> { "Tạo nhóm thành công" };
+                _response.StatusCode = HttpStatusCode.OK;
+                _response.IsSuccess = true;
+                return _response;
+            }
+            catch (Exception ex)
+            {
+                _response.Notification = new List<string> { ex.Message };
+                _response.IsSuccess = false;
+                _response.StatusCode = HttpStatusCode.InternalServerError;
+                return _response;
+            }
+        }
+        [HttpPost]
+        [Route("[controller]/SendMessageToGroup")]
+        public async Task<ActionResult<APIResponse>> SendMessageToGroup([FromBody] MessageGroupDTO message)
+        {
+            try
+            {
+                var group = await _db.Groups.Include(g => g.UserGroups).ThenInclude(ug => ug.User).FirstOrDefaultAsync(x => x.GroupId == message.GroupId);
+                if (group == null)
+                {
+                    _response.Notification = new List<string> { "Nhóm không tồn tại" };
+                    _response.IsSuccess = false;
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    return _response;
+                }
+                var userGroup = group.UserGroups.FirstOrDefault(x => x.UserId == message.senderId);
+                if (userGroup == null)
+                {
+                    _response.Notification = new List<string> { "Bạn không thuộc nhóm này" };
+                    _response.IsSuccess = false;
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    return _response;
+                }
+                var messageEntity = new Message
+                {
+                    GroupId = message.GroupId,
+                    UserId = message.senderId,
+                    Content = message.Content,
+                    SentDate = DateTime.Now
+                };
+                await _db.Messages.AddAsync(messageEntity);
+                await _db.SaveChangesAsync();
+
+                var messageDto = new MessageGroupDTO
+                {
+                    GroupId = messageEntity.GroupId,
+                    senderId = messageEntity.UserId,
+                    Content = messageEntity.Content,
+                    CreatedDate = messageEntity.SentDate
+                };
+
+
+                //await _hubContext.Clients.Group(message.GroupId.ToString()).SendAsync("ReceiveMessage", messageDto);
+                _response.Result = messageDto;
+                _response.Notification = new List<string> { "Gửi tin nhắn thành công" };
+                _response.StatusCode = HttpStatusCode.OK;
+                _response.IsSuccess = true;
+                return _response;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                _response.Notification = new List<string> { ex.Message };
+                _response.IsSuccess = false;
+                _response.StatusCode = HttpStatusCode.InternalServerError;
+                return _response;
+            }
+        }
+        [HttpGet]
+        [Route("[controller]/GetMessageByGroup")]
+        public async Task<ActionResult<APIResponse>> GetMessageByGroup(int groupId)
+        {
+            try
+            {
+                var messages = await _db.Messages.Where(x => x.GroupId == groupId && x.isDeleted == false).ToListAsync();
+                var messageDtos = new List<MessageGroupDTO>();
+                foreach (var message in messages)
+                {
+                    var messageDto = new MessageGroupDTO
+                    {
+                        GroupId = message.GroupId,
+                        senderId = message.UserId,
+                        Content = message.Content,
+                        CreatedDate = message.SentDate
+                    };
+                    messageDtos.Add(messageDto);
+                }
+
+                _response.Result = messageDtos;
+                _response.Notification = new List<string> { "Lấy dữ liệu thành công" };
+                _response.StatusCode = HttpStatusCode.OK;
+                _response.IsSuccess = true;
+                return _response;
+            }
+            catch (Exception ex)
+            {
+                _response.Notification = new List<string> { ex.Message };
+                _response.IsSuccess = false;
+                _response.StatusCode = HttpStatusCode.InternalServerError;
+                return _response;
+            }
+        }
+
+        [HttpPost]
+        [Route("[controller]/SendMessageToUser")]
+        public async Task<ActionResult<APIResponse>> SendMessageToUser([FromBody] MessageUserDTO message)
+        {
+            try
+            {
+
+                var user = await _db.Users.FirstOrDefaultAsync(x => x.Id == message.senderId);
+                if (user == null)
+                {
+                    _response.Notification = new List<string> { "Người dùng không tồn tại" };
+                    _response.IsSuccess = false;
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    return _response;
+                }
+                var receiver = await _db.Users.FirstOrDefaultAsync(x => x.Id == message.ReceiverId);
+                if (receiver == null)
+                {
+                    _response.Notification = new List<string> { "Người nhận không tồn tại" };
+                    _response.IsSuccess = false;
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    return _response;
+                }
+                var conversation = await _db.Conversations.FirstOrDefaultAsync(x => x.UserRefId == message.ReceiverId && x.GroupId == null);
                 if (conversation == null)
                 {
                     conversation = new Conversation
                     {
-                        ConversationType = ConversationType.Private,
-                        CreatedAt = DateTime.Now,
-                        UserConversations = new List<UserConversation>
-                        {
-                            new UserConversation
-                            {
-                                UserRefId = mess.senderId
-                            },
-                            new UserConversation
-                            {
-                                UserRefId = mess.senderId
-                            }
-                        }
+                        UserRefId = message.senderId,
+                        ReceiverId = message.ReceiverId,
+                        LatestMessageDateTime = DateTime.Now
                     };
-                    _context.Conversations.Add(conversation);
-                    await _context.SaveChangesAsync();
-                }
-                if (mess.AttachmentUrl != null)
-                {
-                    Attachment attachment = new()
+                    conversation = new Conversation
                     {
-                        conversationId = conversation.ConversationId,
-                        senderId = mess.senderId,
-                        FileUrl = mess.AttachmentUrl,
-                        FileType = mess.AttachmentType,
-                        UploadedAt = DateTime.Now
-
+                        UserRefId = message.ReceiverId,
+                        ReceiverId = message.senderId,
+                        LatestMessageDateTime = DateTime.Now
                     };
-                    conversation.Attachments.Add(attachment);
-                    _context.Conversations.Update(conversation);
-                    await _context.SaveChangesAsync();
-                    _ = _hubContext.Clients.Group(conversation.ConversationId.ToString()).SendAsync("ReceiveMessage", attachment);
-                    return new APIResponse { StatusCode = HttpStatusCode.OK, IsSuccess = true, Result = attachment };
+                    await _db.Conversations.AddAsync(conversation);
+                    await _db.SaveChangesAsync();
                 }
-                else
+                var messageEntity = new Message
                 {
-                    Message message = new()
-                    {
-                        ConversationId = conversation.ConversationId,
-                        UserRefId = mess.senderId,
-                        Content = mess.Content,
-                        SentAt = DateTime.Now
-                    };
-                    conversation.Messages.Add(message);
-                    _context.Conversations.Update(conversation);
-                    await _context.SaveChangesAsync();
-                    _ = _hubContext.Clients.Group(conversation.ConversationId.ToString()).SendAsync("ReceiveMessage", message);
-                    return new APIResponse { StatusCode = HttpStatusCode.OK, IsSuccess = true, Result = message };
+                    UserId = message.senderId,
+                    ReceiverId = message.ReceiverId,
+                    Content = message.Content,
+                    SentDate = DateTime.Now
+                };
+                await _db.Messages.AddAsync(messageEntity);
+                await _db.SaveChangesAsync();
 
-                }
+                var messageDto = new MessageUserDTO
+                {
+                    senderId = messageEntity.UserId,
+                    ReceiverId = messageEntity.ReceiverId,
+                    Content = messageEntity.Content,
+                    CreatedDate = messageEntity.SentDate
+                };
 
-
+                //await _hubContext.Clients.User(message.receiverId).SendAsync("ReceiveMessage", messageDto);
+                _response.Result = messageDto;
+                _response.Notification = new List<string> { "Gửi tin nhắn thành công" };
+                _response.StatusCode = HttpStatusCode.OK;
+                _response.IsSuccess = true;
+                return _response;
             }
             catch (Exception ex)
             {
-                return new APIResponse
-                {
-                    StatusCode = HttpStatusCode.InternalServerError,
-                    IsSuccess = false,
-                    ErrorMessages = new List<string> { ex.Message }
-                };
+                Console.WriteLine(ex.Message);
+                _response.Notification = new List<string> { ex.Message };
+                _response.IsSuccess = false;
+                _response.StatusCode = HttpStatusCode.InternalServerError;
+                return _response;
             }
         }
-        //("{idConversation}")
+
         [HttpGet]
-        [Route("/[controller]/GetMessageConversation")]
-        public async Task<ActionResult<APIResponse>> GetMessageGroup(int idConversation)
+        [Route("[controller]/GetMessageByUser")]
+        public async Task<ActionResult<APIResponse>> GetMessageByUser(string senderId, string receiverId)
         {
             try
             {
-                if (idConversation == null)
+                var messages = await _db.Messages.Where(x => x.UserId == senderId && x.ReceiverId == receiverId && x.isDeleted == false).ToListAsync();
+                var messageDtos = new List<MessageUserDTO>();
+                foreach (var message in messages)
                 {
-                    return new APIResponse
+
+                    var messageDto = new MessageUserDTO
                     {
-                        StatusCode = HttpStatusCode.BadRequest,
-                        IsSuccess = false,
-                        ErrorMessages = new List<string> { "idConversation không tồn tại!" }
+                        senderId = message.UserId,
+                        ReceiverId = message.ReceiverId,
+                        Content = message.Content,
+                        CreatedDate = message.SentDate
                     };
+                    messageDtos.Add(messageDto);
                 }
-                var messages = await _context.Conversations.Where(m => m.ConversationId == idConversation).
-                    SelectMany(m => m.Messages).OrderBy(m => m.SentAt).ToListAsync();
-                return new APIResponse
-                {
-                    StatusCode = HttpStatusCode.OK,
-                    IsSuccess = true,
-                    Result = messages
-                };
+
+                _response.Result = messageDtos;
+                _response.Notification = new List<string> { "Lấy dữ liệu thành công" };
+                _response.StatusCode = HttpStatusCode.OK;
+                _response.IsSuccess = true;
+                return _response;
             }
             catch (Exception ex)
             {
-                return new APIResponse
-                {
-                    StatusCode = HttpStatusCode.InternalServerError,
-                    IsSuccess = false,
-                    ErrorMessages = new List<string> { ex.Message }
-                };
+                _response.Notification = new List<string> { ex.Message };
+                _response.IsSuccess = false;
+                _response.StatusCode = HttpStatusCode.InternalServerError;
+                return _response;
             }
-
         }
-        //("{name}")
-        [HttpPost]
-        [Route("/[controller]/SearchUser")]
-        public async Task<ActionResult<APIResponse>> SearchUser(string name)
+
+        [HttpGet]
+        [Route("[controller]/GetAllMessage")]
+        public async Task<ActionResult<APIResponse>> GetAllMessage()
         {
             try
             {
-                var users = await _context.Users.Where(u => u.Name.Contains(name)).ToListAsync();
-                return new APIResponse
-                {
-                    StatusCode = HttpStatusCode.OK,
-                    IsSuccess = true,
-                    Result = users
-                };
+                var messages = await _db.Messages.ToListAsync();
+                //foreach (var message in messages)
+                //{
+                //    await _db.Entry(message).Reference(m => m.User).LoadAsync();
+                //    await _db.Entry(message).Reference(m => m.Receiver).LoadAsync();
+                //    await _db.Entry(message).Reference(m => m.Group).LoadAsync();
+                //}
+
+
+                _response.Result = messages;
+                _response.Notification = new List<string> { "Lấy dữ liệu thành công" };
+                _response.StatusCode = HttpStatusCode.OK;
+                _response.IsSuccess = true;
+                return _response;
             }
             catch (Exception ex)
             {
-                return new APIResponse
-                {
-                    StatusCode = HttpStatusCode.InternalServerError,
-                    IsSuccess = false,
-                    ErrorMessages = new List<string> { ex.Message }
-                };
+                _response.Notification = new List<string> { ex.Message };
+                _response.IsSuccess = false;
+                _response.StatusCode = HttpStatusCode.InternalServerError;
+                return _response;
             }
         }
-        [HttpPost]
-        [Route("/[controller]/LoginMobile")]
-        public async Task<ActionResult> LoginMobile(LoginVM login)
+        [HttpGet]
+        [Route("[controller]/GetAllAttachment")]
+        public async Task<ActionResult<APIResponse>> GetAllAttachment()
         {
-            var result = await _homeService.Login(login.Email, login.Password, login.RememberMe);
-
-            if (!result.Succeeded)
+            try
             {
-                if (result.IsLockedOut)
-                {
-                    return Ok(new ResVM<LoginVM>
-                    {
-                        data = null,
-                        Message = "Tài khoản đã bị khóa",
-                        Success = false
-                    });
-                }
-                else
-                {
-                    return Ok(new ResVM<LoginVM>
-                    {
-                        data = null,
-                        Message = "Mật khẩu không chính xác",
-                        Success = false
-                    });
-                }
+                var attachments = await _db.Files.ToListAsync();
+                _response.Result = attachments;
+                _response.Notification = new List<string> { "Lấy dữ liệu thành công" };
+                _response.StatusCode = HttpStatusCode.OK;
+                _response.IsSuccess = true;
+                return _response;
             }
-
-            // Lấy thông tin user từ kết quả đăng nhập thành công
-            var user = await _homeService.GetUserToEmail(login.Email);
-
-            return Ok(new ResVM<ApplicationUser>
+            catch (Exception ex)
             {
-                data = user,
-                Message = "Đăng nhập thành công",
-                Success = true
-            });
+                _response.Notification = new List<string> { ex.Message };
+                _response.IsSuccess = false;
+                _response.StatusCode = HttpStatusCode.InternalServerError;
+                return _response;
+            }
         }
-        [HttpPost]
-        [Route("/[controller]/RegisterMobile")]
-        public async Task<ActionResult> RegisterMobile(RegisterVM register)
+        [HttpGet]
+        [Route("[controller]/GetAttachmentByGroup")]
+        public async Task<ActionResult<APIResponse>> GetAttachmentByGroup(int groupId)
         {
-            var result = await _homeService.Register(register.Email, register.Name, register.Password);
-
-            if (!result.Succeeded)
+            try
             {
-                return Ok(new ResVM<RegisterVM>
-                {
-                    data = null,
-                    Message = "Đăng ký không thành công",
-                    Success = false
-                });
+                var attachments = await _db.Files.Where(x => x.GroupId == groupId).ToListAsync();
+                _response.Result = attachments;
+                _response.Notification = new List<string> { "Lấy dữ liệu thành công" };
+                _response.StatusCode = HttpStatusCode.OK;
+                _response.IsSuccess = true;
+                return _response;
             }
-
-            // Lấy thông tin user từ kết quả đăng ký thành công
-            var user = await _homeService.GetUserToEmail(register.Email);
-
-            return Ok(new ResVM<ApplicationUser>
+            catch (Exception ex)
             {
-                data = user,
-                Message = "Đăng ký thành công",
-                Success = true
-            });
+                _response.Notification = new List<string> { ex.Message };
+                _response.IsSuccess = false;
+                _response.StatusCode = HttpStatusCode.InternalServerError;
+                return _response;
+            }
+        }
+        [HttpGet]
+        [Route("[controller]/GetAttachmentByUser")]
+        public async Task<ActionResult<APIResponse>> GetAttachmentByUser(string senderId, string receiverId)
+        {
+            try
+            {
+                var attachments = await _db.Files.Where(x => x.UserId == senderId && x.ReceiverId == receiverId).ToListAsync();
+                _response.Result = attachments;
+                _response.Notification = new List<string> { "Lấy dữ liệu thành công" };
+                _response.StatusCode = HttpStatusCode.OK;
+                _response.IsSuccess = true;
+                return _response;
+            }
+            catch (Exception ex)
+            {
+                _response.Notification = new List<string> { ex.Message };
+                _response.IsSuccess = false;
+                _response.StatusCode = HttpStatusCode.InternalServerError;
+                return _response;
+            }
         }
 
-        //[HttpPost]
-        //[Route("/[controller]/PostMessagePrivate")]
-        //public async Task<ActionResult> PostMessagePrivate(Message message)
-        //{
-        //    if (_context.Messages == null)
-        //    {
-        //        return Problem("Entity set 'ApplicationDbContext.Message'  is null.");
-        //    }
-        //    _context.Messages.Add(message);
-        //    await _context.SaveChangesAsync();
+        [HttpGet]
+        [Route("[controller]/GetChatYour/{idUser}")]
+        public async Task<ActionResult<APIResponse>> GetChatYour(string idUser)
+        {
+            try
+            {
+                var messUser = await _db.Messages.Where(x => x.UserId == idUser).ToListAsync();
+                var messReceiver = await _db.Messages.Where(x => x.ReceiverId == idUser).ToListAsync();
+                var messGroup = await _db.Messages.Where(x => x.GroupId != null && x.isDeleted == false).ToListAsync();
+                var messUserGroup = new List<Message>();
+                foreach (var item in messGroup)
+                {
+                    var userGroup = await _db.UserGroups.FirstOrDefaultAsync(x => x.GroupId == item.GroupId && x.UserId == idUser);
+                    if (userGroup != null)
+                    {
+                        messUserGroup.Add(item);
+                    }
+                }
+                var mess = messUser.Concat(messReceiver).Concat(messUserGroup).ToList();
+                _response.Result = mess;
+                _response.Notification = new List<string> { "Lấy dữ liệu thành công" };
+                _response.StatusCode = HttpStatusCode.OK;
+                _response.IsSuccess = true;
+                return _response;
+            }
+            catch (Exception ex)
+            {
+                _response.Notification = new List<string> { ex.Message };
+                _response.IsSuccess = false;
+                _response.StatusCode = HttpStatusCode.InternalServerError;
+                return _response;
+            }
+        }
 
-        //    await _hubContext.Clients.User(message.Sender.Id).SendAsync("ReceiveMessage", message);
 
-        //    return CreatedAtAction("GetChatRoom", new { id = message.MessageId }, message);
-        //}
+        [HttpDelete]
+        [Route("[controller]/DeleteGroup/{idGroup}")]
+        public async Task<ActionResult<APIResponse>> DeleteGroup(int idGroup, string createBy)
+        {
+            try
+            {
 
+                var group = await _db.Groups.FirstOrDefaultAsync(x => x.GroupId == idGroup);
+                if (group == null)
+                {
+                    _response.Notification = new List<string> { "Nhóm không tồn tại" };
+                    _response.IsSuccess = false;
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    return _response;
+                }
+                if (group.CreatedBy != createBy)
+                {
+                    _response.Notification = new List<string> { "Bạn không phải là người tạo nhóm" };
+                    _response.IsSuccess = false;
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    return _response;
+                }
+                group.isDeleted = true;
+                var messages = await _db.Messages.Where(x => x.GroupId == idGroup).ToListAsync();
+                foreach (var message in messages)
+                {
+                    message.isDeleted = true;
+                }
+                _db.Messages.UpdateRange(messages);
+                _db.Groups.Update(group);
+                await _db.SaveChangesAsync();
+                _response.Notification = new List<string> { "Xóa nhóm thành công" };
+                _response.StatusCode = HttpStatusCode.OK;
+                _response.IsSuccess = true;
+                return _response;
+            }
+            catch (Exception ex)
+            {
+                _response.Notification = new List<string> { ex.Message };
+                _response.IsSuccess = false;
+                _response.StatusCode = HttpStatusCode.InternalServerError;
+                return _response;
+            }
+        }
+        [HttpDelete]
+        [Route("[controller]/DeleteMessage/{idMessage}")]
+        public async Task<ActionResult<APIResponse>> DeleteMessage(int idMessage, string senderId)
+        {
+            try
+            {
+                var message = await _db.Messages.FirstOrDefaultAsync(x => x.MessageId == idMessage);
+                if (message == null)
+                {
+                    _response.Notification = new List<string> { "Tin nhắn không tồn tại" };
+                    _response.IsSuccess = false;
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    return BadRequest(_response);
+                }
+                if (message.UserId != senderId)
+                {
+                    _response.Notification = new List<string> { "Bạn không phải là người gửi tin nhắn" };
+                    _response.IsSuccess = false;
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    return BadRequest(_response);
+                }
+                message.isDeleted = true;
+                _db.Messages.Update(message);
+                await _db.SaveChangesAsync();
+                _response.Notification = new List<string> { "Xóa tin nhắn thành công" };
+                _response.StatusCode = HttpStatusCode.OK;
+                _response.IsSuccess = true;
+                return Ok(_response);
+            }
+            catch (Exception ex)
+            {
+                _response.Notification = new List<string> { ex.Message };
+                _response.IsSuccess = false;
+                _response.StatusCode = HttpStatusCode.InternalServerError;
+                return _response;
+            }
+        }
 
+        [HttpDelete]
+        [Route("[controller]/DeleteAttachment/{idAttachment}")]
+        public async Task<ActionResult<APIResponse>> DeleteAttachment(int idAttachment, string senderId)
+        {
+            try
+            {
+                var attachment = await _db.Files.FirstOrDefaultAsync(x => x.AttachmentId == idAttachment);
+                if (attachment == null)
+                {
+                    _response.Notification = new List<string> { "File không tồn tại" };
+                    _response.IsSuccess = false;
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    return BadRequest(_response);
+                }
+                if (attachment.UserId != senderId)
+                {
+                    _response.Notification = new List<string> { "Bạn không phải là người gửi file" };
+                    _response.IsSuccess = false;
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    return BadRequest(_response);
+                }
+                _db.Files.Remove(attachment);
+                await _db.SaveChangesAsync();
+                _response.Notification = new List<string> { "Xóa file thành công" };
+                _response.StatusCode = HttpStatusCode.OK;
+                _response.IsSuccess = true;
+                return Ok(_response);
+            }
+            catch (Exception ex)
+            {
+                _response.Notification = new List<string> { ex.Message };
+                _response.IsSuccess = false;
+                _response.StatusCode = HttpStatusCode.InternalServerError;
+                return _response;
+            }
+        }
 
-        //[HttpGet("{idConversation}")]
-        //[Route("/[controller]/GetMessagePrivate")]
-        //public async Task<ActionResult<IEnumerable<Message>>> GetMessagePrivate(int idConversation)
-        //{
-        //    var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        //    var messages = await _context.Messages.Where(m => m.ConversationId == idConversation && m.Sender.Id == userId).ToListAsync();
-
-        //    if (messages == null)
-        //    {
-        //        return NotFound();
-        //    }
-
-        //    return messages;
-        //}
-
-
-        ////// DELETE: api/ChatRooms/5
-        ////[HttpDelete("{id}")]
-        ////[Route("/[controller]/DeleteChatRoom/{id}")]
-        ////public async Task<IActionResult> DeleteChatRoom(int id)
-        ////{
-        ////    if (_context.Conversations == null)
-        ////    {
-        ////        return NotFound();
-        ////    }
-        ////    var chatRoom = await _context.Conversations.FindAsync(id);
-        ////    if (chatRoom == null)
-        ////    {
-        ////        return NotFound();
-        ////    }
-
-        ////    _context.Conversations.Remove(chatRoom);
-        ////    await _context.SaveChangesAsync();
-
-        ////    var room = await _context.Conversations.FirstOrDefaultAsync();
-
-        ////    return Ok(new { deleted = id, selected = (room == null ? 0 : room.ConversationId) });
-        ////}
-
-        //[HttpPost]
-        //[Route("/[controller]/GetChatPrivate")]
-        //public async Task<ActionResult<IEnumerable<Message>>> GetChatPrivate([FromBody] int id)
-        //{
-        //    var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        //    var messages = await _context.Messages.Where(m => m.ConversationId == id && m.Sender.Id == userId).ToListAsync();
-
-        //    if (messages == null)
-        //    {
-        //        return NotFound();
-        //    }
-
-        //    return messages;
-        //}
-
+        [HttpDelete]
+        [Route("[controller]/DeleteUserInGroup/{idGroup}")]
+        public async Task<ActionResult<APIResponse>> DeleteUserInGroup(int idGroup, string idUser, string createBy)
+        {
+            try
+            {
+                var group = await _db.Groups.Include(g => g.UserGroups).FirstOrDefaultAsync(x => x.GroupId == idGroup);
+                if (group == null)
+                {
+                    _response.Notification = new List<string> { "Nhóm không tồn tại" };
+                    _response.IsSuccess = false;
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    return _response;
+                }
+                if (group.CreatedBy != createBy)
+                {
+                    _response.Notification = new List<string> { "Bạn không phải là người tạo nhóm" };
+                    _response.IsSuccess = false;
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    return _response;
+                }
+                var userGroup = group.UserGroups.FirstOrDefault(x => x.UserId == idUser);
+                if (userGroup == null)
+                {
+                    _response.Notification = new List<string> { "Người dùng không thuộc nhóm" };
+                    _response.IsSuccess = false;
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    return _response;
+                }
+                group.UserGroups.Remove(userGroup);
+                _db.Groups.Update(group);
+                await _db.SaveChangesAsync();
+                _response.Notification = new List<string> { "Xóa người dùng khỏi nhóm thành công" };
+                _response.StatusCode = HttpStatusCode.OK;
+                _response.IsSuccess = true;
+                return _response;
+            }
+            catch (Exception ex)
+            {
+                _response.Notification = new List<string> { ex.Message };
+                _response.IsSuccess = false;
+                _response.StatusCode = HttpStatusCode.InternalServerError;
+                return _response;
+            }
+        }
+        [HttpDelete]
+        [Route("[controller]/DeleteMessageChatUser")]
+        public async Task<ActionResult<APIResponse>> DeleteMessageChatUser(string senderId, string receiverId)
+        {
+            try
+            {
+                var messages = await _db.Messages.Where(x => x.UserId == senderId && x.ReceiverId == receiverId).ToListAsync();
+                foreach (var message in messages)
+                {
+                    message.isDeleted = true;
+                }
+                _db.Messages.UpdateRange(messages);
+                await _db.SaveChangesAsync();
+                _response.Notification = new List<string> { "Xóa tin nhắn thành công" };
+                _response.StatusCode = HttpStatusCode.OK;
+                _response.IsSuccess = true;
+                return _response;
+            }
+            catch (Exception ex)
+            {
+                _response.Notification = new List<string> { ex.Message };
+                _response.IsSuccess = false;
+                _response.StatusCode = HttpStatusCode.InternalServerError;
+                return _response;
+            }
+        }
 
     }
 }

@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\ThanhAn\\source\\repos\\ChatApp.Web\\Chat.Domain\\Chat.Domain.csproj": {}
+    "B:\\CodeRun\\.NetCore\\ChatApp\\Chat.Domain\\Chat.Domain.csproj": {}
   },
   "projects": {
-    "C:\\Users\\ThanhAn\\source\\repos\\ChatApp.Web\\Chat.Domain\\Chat.Domain.csproj": {
+    "B:\\CodeRun\\.NetCore\\ChatApp\\Chat.Domain\\Chat.Domain.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\ThanhAn\\source\\repos\\ChatApp.Web\\Chat.Domain\\Chat.Domain.csproj",
+        "projectUniqueName": "B:\\CodeRun\\.NetCore\\ChatApp\\Chat.Domain\\Chat.Domain.csproj",
         "projectName": "Chat.Domain",
-        "projectPath": "C:\\Users\\ThanhAn\\source\\repos\\ChatApp.Web\\Chat.Domain\\Chat.Domain.csproj",
+        "projectPath": "B:\\CodeRun\\.NetCore\\ChatApp\\Chat.Domain\\Chat.Domain.csproj",
         "packagesPath": "C:\\Users\\ThanhAn\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\ThanhAn\\source\\repos\\ChatApp.Web\\Chat.Domain\\obj\\",
+        "outputPath": "B:\\CodeRun\\.NetCore\\ChatApp\\Chat.Domain\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

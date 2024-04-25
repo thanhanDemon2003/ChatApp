@@ -6,11 +6,11 @@ namespace ChatApp.Web.Models
     {
         public APIResponse()
         {
-            ErrorMessages = new List<string>();
+            Notification = new List<string>();
         }
         public HttpStatusCode StatusCode { get; set; }
         public bool IsSuccess { get; set; } = true;
-        public List<string> ErrorMessages { get; set; }
+        public List<string> Notification { get; set; }
         public object Result { get; set; }
     }
 }

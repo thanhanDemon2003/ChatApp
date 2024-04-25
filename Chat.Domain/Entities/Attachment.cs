@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -10,14 +8,17 @@ namespace Chat.Domain.Entities
 {
     public class Attachment
     {
-
         public int AttachmentId { get; set; }
-        public int MessageId { get; set; }
-        public string senderId { get; set; }
-        public int conversationId { get; set; }
-        public Conversation Conversation { get; set; }
+        public string UserId { get; set; }
+        public int? GroupId { get; set; }
+        public string ReceiverId { get; set; }
+        public string FileName { get; set; }
         public string FileUrl { get; set; }
-        public string FileType { get; set; }
-        public DateTime UploadedAt { get; set; }
+        public DateTime SentDate { get; set; }
+        public bool isDeleted { get; set; } = false;
+        public ApplicationUser User { get; set; }
+        public Group Group { get; set; }
+        public ApplicationUser Receiver { get; set; }
     }
 }
+

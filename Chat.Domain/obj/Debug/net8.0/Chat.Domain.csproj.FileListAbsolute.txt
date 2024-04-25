@@ -10,3 +10,16 @@ C:\Users\ThanhAn\source\repos\ChatApp.Web\Chat.Domain\obj\Debug\net8.0\Chat.Doma
 C:\Users\ThanhAn\source\repos\ChatApp.Web\Chat.Domain\obj\Debug\net8.0\refint\Chat.Domain.dll
 C:\Users\ThanhAn\source\repos\ChatApp.Web\Chat.Domain\obj\Debug\net8.0\Chat.Domain.pdb
 C:\Users\ThanhAn\source\repos\ChatApp.Web\Chat.Domain\obj\Debug\net8.0\ref\Chat.Domain.dll
+B:\CodeRun\.NetCore\ChatApp\Chat.Domain\bin\Debug\net8.0\Chat.Domain.deps.json
+B:\CodeRun\.NetCore\ChatApp\Chat.Domain\bin\Debug\net8.0\Chat.Domain.dll
+B:\CodeRun\.NetCore\ChatApp\Chat.Domain\bin\Debug\net8.0\Chat.Domain.pdb
+B:\CodeRun\.NetCore\ChatApp\Chat.Domain\obj\Debug\net8.0\Chat.Domain.csproj.AssemblyReference.cache
+B:\CodeRun\.NetCore\ChatApp\Chat.Domain\obj\Debug\net8.0\Chat.Domain.GeneratedMSBuildEditorConfig.editorconfig
+B:\CodeRun\.NetCore\ChatApp\Chat.Domain\obj\Debug\net8.0\Chat.Domain.AssemblyInfoInputs.cache
+B:\CodeRun\.NetCore\ChatApp\Chat.Domain\obj\Debug\net8.0\Chat.Domain.AssemblyInfo.cs
+B:\CodeRun\.NetCore\ChatApp\Chat.Domain\obj\Debug\net8.0\Chat.Domain.csproj.CoreCompileInputs.cache
+B:\CodeRun\.NetCore\ChatApp\Chat.Domain\obj\Debug\net8.0\Chat.Domain.sourcelink.json
+B:\CodeRun\.NetCore\ChatApp\Chat.Domain\obj\Debug\net8.0\Chat.Domain.dll
+B:\CodeRun\.NetCore\ChatApp\Chat.Domain\obj\Debug\net8.0\refint\Chat.Domain.dll
+B:\CodeRun\.NetCore\ChatApp\Chat.Domain\obj\Debug\net8.0\Chat.Domain.pdb
+B:\CodeRun\.NetCore\ChatApp\Chat.Domain\obj\Debug\net8.0\ref\Chat.Domain.dll
