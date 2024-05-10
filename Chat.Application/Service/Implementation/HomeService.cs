@@ -1,5 +1,6 @@
 ﻿using Chat.Application.Service.Interface;
 using Chat.Domain.Entities;
+using Chat.Infrastructure.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using Microsoft.Win32;
@@ -16,13 +17,27 @@ namespace Chat.Application.Service.Implementation
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
+        private readonly ApplicationDbContext _db;
 
 
 
-        public HomeService(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager)
+        public HomeService(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, ApplicationDbContext db)
         {
             _userManager = userManager;
             _signInManager = signInManager;
+            _db = db;
+        }
+
+        public IEnumerable<Conversation> GetAllUserConversations(string userId)
+        {
+            var conversationList = _db.Conversations.Where(x => x.UserRefId == userId).OrderByDescending(x => x.LatestMessageDateTime).ToList();
+            return conversationList;
+        }
+
+        public IEnumerable<ApplicationUser> GetAllUsers()
+        {
+            var userList = _db.Users.ToList();
+            return userList;
         }
 
         public Task<ApplicationUser> GetUserToEmail(string Email)

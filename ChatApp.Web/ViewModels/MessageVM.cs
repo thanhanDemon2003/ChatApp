@@ -1,11 +1,13 @@
-﻿namespace ChatApp.Web.ViewModels
+﻿using Chat.Domain.Entities;
+
+namespace ChatApp.Web.ViewModels
 {
     public class MessageVM
     {
-        public int Id { get; set; }
-        public string Content { get; set; }
-        public DateTime SentAt { get; set; }
-        public string SenderName { get; set; }
-        public string RecipientName { get; set; }
+        public List<Message> messages { get; set; }
+        public string conversationId { get; set; }
+        public string conversationName { get; set; }
+        public string sendToId { get; set; }
+        public bool isGroup { get; set; }
     }
 }

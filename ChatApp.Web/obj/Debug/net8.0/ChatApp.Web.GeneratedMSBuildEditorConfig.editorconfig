@@ -66,6 +66,10 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxDaGF0LmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = b-wkeqg5priu
 
+[B:/CodeRun/.NetCore/ChatApp/ChatApp.Web/Views/Home/Conversation.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxDb252ZXJzYXRpb24uY3NodG1s
+build_metadata.AdditionalFiles.CssScope = b-5iuhrdxvg4
+
 [B:/CodeRun/.NetCore/ChatApp/ChatApp.Web/Views/Home/Profile.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxQcm9maWxlLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = b-fibvpd7575

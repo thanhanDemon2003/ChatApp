@@ -29,3 +29,5 @@ B:\CodeRun\.NetCore\ChatApp\Chat.Application\obj\Debug\net8.0\Chat.Application.d
 B:\CodeRun\.NetCore\ChatApp\Chat.Application\obj\Debug\net8.0\refint\Chat.Application.dll
 B:\CodeRun\.NetCore\ChatApp\Chat.Application\obj\Debug\net8.0\Chat.Application.pdb
 B:\CodeRun\.NetCore\ChatApp\Chat.Application\obj\Debug\net8.0\ref\Chat.Application.dll
+B:\CodeRun\.NetCore\ChatApp\Chat.Application\bin\Debug\net8.0\Chat.Infrastructure.dll
+B:\CodeRun\.NetCore\ChatApp\Chat.Application\bin\Debug\net8.0\Chat.Infrastructure.pdb

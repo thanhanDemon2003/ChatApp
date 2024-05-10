@@ -7,7 +7,7 @@ namespace ChatApp.Web.Models.DTOs
         [Required]
         public string RoomName { get; set; }
         [Required]
-        public string userCrate { get; set; }
+        public string userCreate { get; set; }
         [Required]
         public List<string> userIds { get; set; }
     }

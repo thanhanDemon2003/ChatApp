@@ -92,7 +92,7 @@
 
 .chat .chat-history {
     padding: 20px;
-    border-bottom: 2px solid #fff
+    /*border-bottom: 2px solid #fff*/
 }
 
     .chat .chat-history ul {
@@ -210,6 +210,49 @@
     clear: both;
     height: 0
 }
+.timestamp {
+    display: none;
+}
+
+.clearfix:hover .timestamp {
+    display: inline;
+}
+.clearfix::after {
+    content: "";
+    clear: both;
+    display: table;
+}
+
+.messageGr {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+.user-chat {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.message {
+    padding: 10px;
+    border-radius: 10px;
+    max-width: 70%;
+    word-wrap: break-word;
+    clear: both;
+}
+
+.user-message {
+    background-color: #444;
+    float: right;
+    text-align: right;
+}
+.other-message {
+    background-color: #434651;
+    float: left;
+    text-align: left;
+}
+
 
 @media only screen and (max-width: 767px) {
     .chat-app .people-list {
@@ -237,6 +280,15 @@
         height: 300px;
         overflow-x: auto
     }
+}
+.input-sendGr{
+    width: 80%;
+    padding: 10px;
+    margin-top: 10px;
+    font-size: 16px;
+    resize: none;
+    position: absolute;
+    bottom: 10%;
 }
 
 @media only screen and (min-width: 768px) and (max-width: 992px) {

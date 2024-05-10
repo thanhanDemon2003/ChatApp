@@ -35,6 +35,9 @@
             "projectReferences": {
               "B:\\CodeRun\\.NetCore\\ChatApp\\Chat.Domain\\Chat.Domain.csproj": {
                 "projectPath": "B:\\CodeRun\\.NetCore\\ChatApp\\Chat.Domain\\Chat.Domain.csproj"
+              },
+              "B:\\CodeRun\\.NetCore\\ChatApp\\Chat.Infrastructure\\Chat.Infrastructure.csproj": {
+                "projectPath": "B:\\CodeRun\\.NetCore\\ChatApp\\Chat.Infrastructure\\Chat.Infrastructure.csproj"
               }
             }
           }

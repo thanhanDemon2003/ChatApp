@@ -16,6 +16,9 @@ namespace Chat.Application.Service.Interface
         Task<ApplicationUser> Profile(ClaimsPrincipal User);
         Task<IdentityResult> ProfileUp(ClaimsPrincipal User, ApplicationUser UserProfile);
         Task<ApplicationUser> GetUserToEmail(string Email);
+        IEnumerable<ApplicationUser> GetAllUsers();
+        IEnumerable<Conversation> GetAllUserConversations(string userId);
+
         void Logout();
     }
 }

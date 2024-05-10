@@ -1,6 +1,6 @@
 {
   "Version": 1,
-  "Hash": "lBZ6K0vsZy0OdhbjVqAQVVwhhTLZCESzXIFVETNSeoA=",
+  "Hash": "c+V+/EsZaXOzCo6iKs4aK5+c3vyN9ZgQ4Qne442B7Xk=",
   "Source": "ChatApp.Web",
   "BasePath": "_content/ChatApp.Web",
   "Mode": "Default",
@@ -1307,6 +1307,25 @@
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
       "OriginalItemSpec": "wwwroot\\fonts\\poppins\\Poppins-ThinItalic.ttf"
+    },
+    {
+      "Identity": "B:\\CodeRun\\.NetCore\\ChatApp\\ChatApp.Web\\wwwroot\\images\\iconGroup.jpg",
+      "SourceId": "ChatApp.Web",
+      "SourceType": "Discovered",
+      "ContentRoot": "B:\\CodeRun\\.NetCore\\ChatApp\\ChatApp.Web\\wwwroot\\",
+      "BasePath": "_content/ChatApp.Web",
+      "RelativePath": "images/iconGroup.jpg",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\images\\iconGroup.jpg"
     },
     {
       "Identity": "B:\\CodeRun\\.NetCore\\ChatApp\\ChatApp.Web\\wwwroot\\images\\icons\\favicon.ico",

@@ -269,6 +269,10 @@
       "PackagePath": "staticwebassets\\fonts\\poppins\\Poppins-ThinItalic.ttf"
     },
     {
+      "Id": "B:\\CodeRun\\.NetCore\\ChatApp\\ChatApp.Web\\wwwroot\\images\\iconGroup.jpg",
+      "PackagePath": "staticwebassets\\images\\iconGroup.jpg"
+    },
+    {
       "Id": "B:\\CodeRun\\.NetCore\\ChatApp\\ChatApp.Web\\wwwroot\\images\\icons\\favicon.ico",
       "PackagePath": "staticwebassets\\images\\icons\\favicon.ico"
     },

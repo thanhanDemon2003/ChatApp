@@ -159,13 +159,26 @@ namespace Chat.Infrastructure.Migrations
                     b.Property<int?>("GroupId")
                         .HasColumnType("int");
 
+                    b.Property<string>("GroupName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("LatestMessage")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTime>("LatestMessageDateTime")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("ReceiverId")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("ReceiverName")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("UserRefId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("imageUrlConversation")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 

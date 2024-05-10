@@ -20,7 +20,7 @@ using ChatApp.Web.Models.DTOs;
 
 namespace ChatApp.Web.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/")]
     [ApiController]
     public class ApiChatsController : ControllerBase
     {
@@ -51,24 +51,25 @@ namespace ChatApp.Web.Controllers
                     _response.Notification = new List<string> { "User không tồn tại" };
                     _response.IsSuccess = false;
                     _response.StatusCode = HttpStatusCode.BadRequest;
-                    return _response;
+                    return BadRequest(_response);
                 }
                 var result = await _homeService.Login(model.Email, model.Password, false);
                 if (result.Succeeded)
                 {
                     var userData = await _db.Users.FirstOrDefaultAsync(x => x.Email == model.Email);
+                    //await _hubContext.Clients.All.SendAsync("ReceiveUserConnected", userData.Id, userData.Name);
                     _response.Result = userData;
                     _response.Notification = new List<string> { "Đăng nhập thành công" };
                     _response.StatusCode = HttpStatusCode.OK;
                     _response.IsSuccess = true;
-                    return _response;
+                    return Ok(_response);
                 }
                 else
                 {
                     _response.Notification = new List<string> { "Đăng nhập thất bại" };
                     _response.StatusCode = HttpStatusCode.BadRequest;
                     _response.IsSuccess = false;
-                    return _response;
+                    return BadRequest(_response);
                 }
             }
             catch (Exception ex)
@@ -76,7 +77,7 @@ namespace ChatApp.Web.Controllers
                 _response.Notification = new List<string> { ex.Message };
                 _response.IsSuccess = false;
                 _response.StatusCode = HttpStatusCode.InternalServerError;
-                return _response;
+                return BadRequest(_response);
             }
         }
         [HttpPost]
@@ -202,12 +203,12 @@ namespace ChatApp.Web.Controllers
                 {
                     GroupName = roomChat.RoomName,
                     CreatedDate = DateTime.Now,
-                    CreatedBy = roomChat.userCrate,
+                    CreatedBy = roomChat.userCreate,
                     UserGroups = new List<UserGroup>()
                 };
                 var userCreateGroup = new UserGroup
                 {
-                    UserId = roomChat.userCrate,
+                    UserId = roomChat.userCreate,
                     GroupId = groupChat.GroupId,
                 };
                 groupChat.UserGroups.Add(userCreateGroup);
@@ -223,14 +224,17 @@ namespace ChatApp.Web.Controllers
 
                 await _db.Groups.AddAsync(groupChat);
                 await _db.SaveChangesAsync();
-
+                var userCreate = await _db.Users.FirstOrDefaultAsync(x => x.Id == roomChat.userCreate);
                 foreach (var userConversation in groupChat.UserGroups)
                 {
                     Conversation conversation = new Conversation
                     {
                         UserRefId = userConversation.UserId,
                         GroupId = groupChat.GroupId,
-                        LatestMessageDateTime = DateTime.Now
+                        LatestMessageDateTime = DateTime.Now,
+                        LatestMessage = userCreate.Name + " Đã tạo nhóm " + groupChat.GroupName,
+                        GroupName = groupChat.GroupName,
+                        imageUrlConversation = "/images/iconGroup.jpg"
                     };
                     await _db.Conversations.AddAsync(conversation);
                 }
@@ -250,7 +254,12 @@ namespace ChatApp.Web.Controllers
                     CreatedBy = groupChat.CreatedBy,
                     UserGroups = userGroupDtos
                 };
-
+                var NoteMessage = userCreate.Name + " Đã tạo nhóm " + groupChat.GroupName;
+                var listConversation = await _db.Conversations.Where(x => x.GroupId == groupChat.GroupId).ToListAsync();
+                foreach (var conversation in listConversation)
+                {
+                    await _hubContext.Clients.User(conversation.UserRefId).SendAsync("ReceiveAddConversation", conversation.ConversationId, groupChat.GroupName, NoteMessage);
+                }
                 _response.Result = groupChatDto;
                 _response.Notification = new List<string> { "Tạo nhóm thành công" };
                 _response.StatusCode = HttpStatusCode.OK;
@@ -297,6 +306,12 @@ namespace ChatApp.Web.Controllers
                 await _db.Messages.AddAsync(messageEntity);
                 await _db.SaveChangesAsync();
 
+
+                var conversation = await _db.Conversations.FirstOrDefaultAsync(x => x.GroupId == message.GroupId);
+                conversation.LatestMessageDateTime = DateTime.Now;
+                conversation.LatestMessage = message.Content;
+                _db.Conversations.Update(conversation);
+                await _db.SaveChangesAsync();
                 var messageDto = new MessageGroupDTO
                 {
                     GroupId = messageEntity.GroupId,
@@ -305,8 +320,16 @@ namespace ChatApp.Web.Controllers
                     CreatedDate = messageEntity.SentDate
                 };
 
+                var usersToSend = group.UserGroups
+                        .Where(x => x.UserId != userGroup.UserId)
+                        .Select(x => x.UserId)
+                        .ToList();
 
-                //await _hubContext.Clients.Group(message.GroupId.ToString()).SendAsync("ReceiveMessage", messageDto);
+                if (usersToSend.Any())
+                {
+                    await _hubContext.Clients.Users(usersToSend)
+                        .SendAsync("ReceiveMessageGroup", messageEntity.Content, userGroup.User.Name, DateTime.Now.ToString("hh:mm"));
+                }
                 _response.Result = messageDto;
                 _response.Notification = new List<string> { "Gửi tin nhắn thành công" };
                 _response.StatusCode = HttpStatusCode.OK;
@@ -328,7 +351,8 @@ namespace ChatApp.Web.Controllers
         {
             try
             {
-                var messages = await _db.Messages.Where(x => x.GroupId == groupId && x.isDeleted == false).ToListAsync();
+                var messages = await _db.Messages.Where(x => x.GroupId == groupId && x.isDeleted == false).
+                    OrderBy(x => x.SentDate).ToListAsync();
                 var messageDtos = new List<MessageGroupDTO>();
                 foreach (var message in messages)
                 {
@@ -380,23 +404,50 @@ namespace ChatApp.Web.Controllers
                     _response.StatusCode = HttpStatusCode.BadRequest;
                     return _response;
                 }
-                var conversation = await _db.Conversations.FirstOrDefaultAsync(x => x.UserRefId == message.ReceiverId && x.GroupId == null);
+                var conversation = await _db.Conversations.FirstOrDefaultAsync(x => x.UserRefId == message.senderId && x.ReceiverId == message.ReceiverId);
                 if (conversation == null)
                 {
-                    conversation = new Conversation
+                    var conversationNewSender = new Conversation
                     {
                         UserRefId = message.senderId,
                         ReceiverId = message.ReceiverId,
-                        LatestMessageDateTime = DateTime.Now
+                        LatestMessageDateTime = DateTime.Now,
+                        LatestMessage = message.Content,
+                        ReceiverName = receiver.Name,
+                        imageUrlConversation = receiver.ImageUrl
                     };
-                    conversation = new Conversation
+                    var conversationReceiver = new Conversation
                     {
                         UserRefId = message.ReceiverId,
                         ReceiverId = message.senderId,
-                        LatestMessageDateTime = DateTime.Now
+                        LatestMessageDateTime = DateTime.Now,
+                        LatestMessage = message.Content,
+                        ReceiverName = user.Name,
+                        imageUrlConversation = user.ImageUrl
                     };
-                    await _db.Conversations.AddAsync(conversation);
+
+
+
+                    await _db.Conversations.AddRangeAsync(conversationNewSender, conversationReceiver);
                     await _db.SaveChangesAsync();
+                    await _hubContext.Clients.User(message.senderId).SendAsync("ReceiveAddConversation", conversationNewSender.ConversationId, conversationNewSender.ReceiverName, message.Content);
+                    await _hubContext.Clients.User(message.ReceiverId).SendAsync("ReceiveAddConversation", conversationReceiver.ConversationId, conversationReceiver.ReceiverName, message.Content);
+
+
+                }
+                else
+                {
+                    var conversationSender = await _db.Conversations.FirstOrDefaultAsync(x => x.UserRefId == message.senderId && x.ReceiverId == message.ReceiverId);
+                    conversationSender.LatestMessageDateTime = DateTime.Now;
+                    conversationSender.LatestMessage = message.Content;
+
+                    var conversationReceiver = await _db.Conversations.FirstOrDefaultAsync(x => x.UserRefId == message.ReceiverId && x.ReceiverId == message.senderId);
+                    conversationReceiver.LatestMessageDateTime = DateTime.Now;
+                    conversationReceiver.LatestMessage = message.Content;
+
+                    _db.Conversations.UpdateRange(conversationSender, conversationReceiver);
+                    await _db.SaveChangesAsync();
+
                 }
                 var messageEntity = new Message
                 {
@@ -408,6 +459,8 @@ namespace ChatApp.Web.Controllers
                 await _db.Messages.AddAsync(messageEntity);
                 await _db.SaveChangesAsync();
 
+
+
                 var messageDto = new MessageUserDTO
                 {
                     senderId = messageEntity.UserId,
@@ -416,7 +469,7 @@ namespace ChatApp.Web.Controllers
                     CreatedDate = messageEntity.SentDate
                 };
 
-                //await _hubContext.Clients.User(message.receiverId).SendAsync("ReceiveMessage", messageDto);
+                await _hubContext.Clients.Users(receiver.Id).SendAsync("ReceiveMessageToUser", user.Name, messageEntity.Content, receiver.Name, DateTime.Now.ToString("hh:mm"));
                 _response.Result = messageDto;
                 _response.Notification = new List<string> { "Gửi tin nhắn thành công" };
                 _response.StatusCode = HttpStatusCode.OK;
@@ -439,7 +492,11 @@ namespace ChatApp.Web.Controllers
         {
             try
             {
-                var messages = await _db.Messages.Where(x => x.UserId == senderId && x.ReceiverId == receiverId && x.isDeleted == false).ToListAsync();
+                var messages = await _db.Messages
+                   .Where(x => (x.ReceiverId == receiverId && x.UserId == senderId) ||
+                (x.ReceiverId == senderId && x.UserId == receiverId) && x.isDeleted == false)
+                   .OrderBy(x => x.SentDate)
+                   .ToListAsync();
                 var messageDtos = new List<MessageUserDTO>();
                 foreach (var message in messages)
                 {
@@ -468,7 +525,6 @@ namespace ChatApp.Web.Controllers
                 return _response;
             }
         }
-
         [HttpGet]
         [Route("[controller]/GetAllMessage")]
         public async Task<ActionResult<APIResponse>> GetAllMessage()
@@ -568,35 +624,48 @@ namespace ChatApp.Web.Controllers
         {
             try
             {
-                var messUser = await _db.Messages.Where(x => x.UserId == idUser).ToListAsync();
-                var messReceiver = await _db.Messages.Where(x => x.ReceiverId == idUser).ToListAsync();
-                var messGroup = await _db.Messages.Where(x => x.GroupId != null && x.isDeleted == false).ToListAsync();
-                var messUserGroup = new List<Message>();
-                foreach (var item in messGroup)
+                var conversations = await _db.Conversations.Where(x => x.UserRefId == idUser).ToListAsync();
+
+                if (conversations.Count == 0)
                 {
-                    var userGroup = await _db.UserGroups.FirstOrDefaultAsync(x => x.GroupId == item.GroupId && x.UserId == idUser);
-                    if (userGroup != null)
-                    {
-                        messUserGroup.Add(item);
-                    }
+                    _response.Notification = new List<string> { "Không có cuộc trò chuyện nào" };
+                    _response.IsSuccess = false;
+                    _response.StatusCode = HttpStatusCode.OK;
+                    return Ok(_response);
                 }
-                var mess = messUser.Concat(messReceiver).Concat(messUserGroup).ToList();
-                _response.Result = mess;
-                _response.Notification = new List<string> { "Lấy dữ liệu thành công" };
-                _response.StatusCode = HttpStatusCode.OK;
-                _response.IsSuccess = true;
-                return _response;
+                else
+                {
+                    var cv = new List<Conversation>();
+                    foreach (var conversation in conversations)
+                    {
+                        var conversationDto = new Conversation
+                        {
+                            ConversationId = conversation.ConversationId,
+                            UserRefId = conversation.UserRefId,
+                            GroupId = conversation.GroupId,
+                            ReceiverId = conversation.ReceiverId,
+                            LatestMessageDateTime = conversation.LatestMessageDateTime,
+                            LatestMessage = conversation.LatestMessage
+                        };
+                        cv.Add(conversationDto);
+                    }
+
+                    _response.Result = cv;
+                    _response.Notification = new List<string> { "Lấy dữ liệu thành công" };
+                    _response.StatusCode = HttpStatusCode.OK;
+                    _response.IsSuccess = true;
+                    return Ok(_response);
+                }
+
             }
-            catch (Exception ex)
+            catch
             {
-                _response.Notification = new List<string> { ex.Message };
+                _response.Notification = new List<string> { "Lỗi" };
                 _response.IsSuccess = false;
                 _response.StatusCode = HttpStatusCode.InternalServerError;
-                return _response;
+                return StatusCode(500, _response);
             }
         }
-
-
         [HttpDelete]
         [Route("[controller]/DeleteGroup/{idGroup}")]
         public async Task<ActionResult<APIResponse>> DeleteGroup(int idGroup, string createBy)

@@ -14,7 +14,11 @@ namespace Chat.Domain.Entities
         public int ConversationId { get; set; }
         public string UserRefId { get; set; }
         public int? GroupId { get; set; }
+        public string? GroupName { get; set; }
         public string? ReceiverId { get; set; }
+        public string? ReceiverName { get; set; }
         public DateTime LatestMessageDateTime { get; set; }
+        public string? LatestMessage { get; set; }
+        public string imageUrlConversation { get; set; }
     }
 }

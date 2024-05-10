@@ -2136,6 +2136,7 @@
       "Chat.Application/1.0.0": {
         "dependencies": {
           "Chat.Domain": "1.0.0",
+          "Chat.Infrastructure": "1.0.0",
           "Microsoft.AspNetCore.Identity": "2.2.0"
         },
         "runtime": {

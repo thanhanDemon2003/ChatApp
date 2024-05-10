@@ -7,6 +7,7 @@ using Chat.Application.Service.Implementation;
 using Chat.Application.Service.Interface;
 using Microsoft.AspNetCore.Mvc;
 using ChatApp.Web;
+using Microsoft.AspNetCore.SignalR;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,6 +28,7 @@ builder.Services.AddControllers().AddJsonOptions(options =>
 });
 
 builder.Services.AddSignalR();
+builder.Services.AddSingleton<HubConnectionStore>();
 
 builder.Services.AddSwaggerGen(c =>
 {
