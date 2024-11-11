@@ -3,7 +3,7 @@
 <div align="center">
   <img src="/api/placeholder/120/120" alt="Chat Application Logo"/>
   
-  [![.NET Core](https://img.shields.io/badge/.NET%20Core-6.0-blue.svg)](https://dotnet.microsoft.com/download)
+  [![.NET Core](https://img.shields.io/badge/.NET%20Core-8.0-blue.svg)](https://dotnet.microsoft.com/download)
   [![SignalR](https://img.shields.io/badge/SignalR-✓-brightgreen.svg)](https://dotnet.microsoft.com/apps/aspnet/signalr)
   [![Clean Architecture](https://img.shields.io/badge/Clean%20Architecture-✓-brightgreen.svg)]()
   [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
