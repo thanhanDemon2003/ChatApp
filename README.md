@@ -280,7 +280,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 👥 Contact
 
-Thanh An - [@yourusername](https://www.facebook.com/thanhan.demon26/)
+Thanh An - [@thanhan.demon26](https://www.facebook.com/thanhan.demon26/)
 
 Project Link: [https://github.com/thanhanDemon2003/ChatApp](https://github.com/thanhanDemon2003/ChatApp)
 
