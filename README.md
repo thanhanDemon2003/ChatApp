@@ -86,7 +86,7 @@ The project follows Clean Architecture principles with the following layers:
   <img src="/api/placeholder/80/80" alt="SQL Server Logo"/>
 </div>
 
-- **.NET 6.0** - Modern, cross-platform framework
+- **.NET 8.0** - Modern, cross-platform framework
 - **SignalR Core** - Real-time communications
 - **Entity Framework Core** - ORM for database operations
 - **MediatR** - Mediator pattern implementation for CQRS
@@ -172,7 +172,7 @@ tests/
 
 ```bash
 # Required installations
-- .NET 6.0 SDK or later
+- .NET 8.0 SDK or later
 - SQL Server 2019 or later
 - Visual Studio 2022 or VS Code
 ```
